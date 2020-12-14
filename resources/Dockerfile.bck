@@ -1,0 +1,16 @@
+# build stage
+FROM node:lts-alpine as build-stage
+WORKDIR /app
+COPY package*.json ./
+RUN npm install
+ARG env_ui
+COPY . .
+RUN chmod +x ./build-frontend.sh
+RUN ./build-frontend.sh $env_ui
+
+# production stage
+FROM nginx:stable-alpine as production-stage
+COPY --from=build-stage /app/dist /usr/share/nginx/html
+EXPOSE 80
+COPY default.conf /etc/nginx/conf.d/default.conf
+CMD ["nginx", "-g", "daemon off;"]
